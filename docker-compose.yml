@@ -10,5 +10,3 @@ services:
       - ../marblecutter/marblecutter:/usr/local/lib/python3.6/dist-packages/marblecutter
     ports:
       - "8000:8000"
-    entrypoint: python
-    command: server.py

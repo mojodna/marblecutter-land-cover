@@ -41,4 +41,4 @@ COPY landcover /opt/marblecutter/landcover
 
 USER nobody
 
-ENTRYPOINT ["gunicorn", "-t", "300", "-k", "gevent", "-b", "0.0.0.0", "--access-logfile", "-", "landcover.web:app"]
+ENTRYPOINT ["gunicorn", "--reload", "-t", "300", "-k", "gevent", "-b", "0.0.0.0", "--access-logfile", "-", "landcover.web:app"]

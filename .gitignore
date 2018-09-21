@@ -11,6 +11,7 @@ up.json
 marblecutter.egg-info/
 *.pyc
 *.tif
+*.aux.xml
 staging.env
 production.env
 out.zip

@@ -6,13 +6,13 @@ from urllib.parse import urlencode
 from logging import StreamHandler
 
 from cachetools.func import lru_cache
-from flask import Markup, jsonify, render_template, request, url_for
+from flask import Markup, jsonify, render_template, request
 from marblecutter import NoCatalogAvailable, tiling
 from marblecutter.catalogs.postgis import PostGISCatalog
 from marblecutter.formats.geotiff import GeoTIFF
 from marblecutter.formats.png import PNG
-from marblecutter.transformations import Colormap
-from marblecutter.web import app
+from marblecutter.transformations import Colormap, Image
+from marblecutter.web import app, url_for
 from mercantile import Tile
 
 nothing = 0
@@ -39,6 +39,7 @@ COLORMAP = {
 LOG = logging.getLogger(__name__)
 CATALOG = PostGISCatalog(table="land_cover")
 COLORMAP_TRANSFORMATION = Colormap(COLORMAP)
+IMAGE_TRANSFORMATION = Image()
 IMAGE_FORMAT = PNG()
 GEOTIFF_FORMAT = GeoTIFF(colormap=COLORMAP)
 
@@ -49,17 +50,8 @@ logging.getLogger("rasterio._base").setLevel(logging.WARNING)
 logging.getLogger("botocore.credentials").setLevel(logging.WARNING)
 
 
-def make_prefix():
-    host = request.headers.get("X-Forwarded-Host", request.headers.get("Host", ""))
-
-    # sniff for API Gateway
-    if ".execute-api." in host and ".amazonaws.com" in host:
-        return request.headers.get("X-Stage")
-
-
-@app.route("/tiles/")
-@app.route("/<prefix>/tiles/")
-def meta(prefix=None):
+@app.route("/")
+def meta():
     meta = {
         "bounds": CATALOG.bounds,
         "center": CATALOG.center,
@@ -69,8 +61,7 @@ def meta(prefix=None):
         "tilejson": "2.2.0",
         "tiles": [
             "{}{{z}}/{{x}}/{{y}}?{}".format(
-                url_for("meta", prefix=make_prefix(), _external=True, _scheme=""),
-                urlencode(request.args),
+                url_for("meta", _external=True, _scheme=""), urlencode(request.args)
             )
         ],
     }
@@ -79,19 +70,12 @@ def meta(prefix=None):
 
 
 @app.route("/preview")
-@app.route("/<prefix>/preview")
-def preview(prefix=None):
+def preview():
     return (
         render_template(
             "preview.html",
             tilejson_url=Markup(
-                url_for(
-                    "meta",
-                    prefix=make_prefix(),
-                    _external=True,
-                    _scheme="",
-                    **request.args
-                )
+                url_for("meta", _external=True, _scheme="", **request.args)
             ),
         ),
         200,
@@ -99,11 +83,9 @@ def preview(prefix=None):
     )
 
 
-@app.route("/tiles/<int:z>/<int:x>/<int:y>")
-@app.route("/tiles/<int:z>/<int:x>/<int:y>@<int:scale>x")
-@app.route("/<prefix>/tiles/<int:z>/<int:x>/<int:y>")
-@app.route("/<prefix>/tiles/<int:z>/<int:x>/<int:y>@<int:scale>x")
-def render_png(z, x, y, scale=1, prefix=None):
+@app.route("/<int:z>/<int:x>/<int:y>")
+@app.route("/<int:z>/<int:x>/<int:y>@<int:scale>x")
+def render_png(z, x, y, scale=1):
     tile = Tile(x, y, z)
 
     headers, data = tiling.render_tile(
@@ -119,9 +101,8 @@ def render_png(z, x, y, scale=1, prefix=None):
     return data, 200, headers
 
 
-@app.route("/tiles/<int:z>/<int:x>/<int:y>.tif")
-@app.route("/<prefix>/tiles/<int:z>/<int:x>/<int:y>.tif")
-def render_tif(z, x, y, prefix=None):
+@app.route("/<int:z>/<int:x>/<int:y>.tif")
+def render_tif(z, x, y):
     tile = Tile(x, y, z)
 
     headers, data = tiling.render_tile(tile, CATALOG, format=GEOTIFF_FORMAT)
@@ -129,3 +110,69 @@ def render_tif(z, x, y, prefix=None):
     headers.update(CATALOG.headers)
 
     return data, 200, headers
+
+
+@app.route("/raw/")
+def raw_meta():
+    meta = {
+        "bounds": CATALOG.bounds,
+        "center": CATALOG.center,
+        "maxzoom": CATALOG.maxzoom,
+        "minzoom": CATALOG.minzoom,
+        "name": CATALOG.name,
+        "tilejson": "2.2.0",
+        "tiles": [
+            "{}{{z}}/{{x}}/{{y}}?{}".format(
+                url_for("raw_meta", _external=True, _scheme=""), urlencode(request.args)
+            )
+        ],
+    }
+
+    return jsonify(meta)
+
+
+@app.route("/raw/preview")
+def raw_preview():
+    return (
+        render_template(
+            "preview.html",
+            tilejson_url=Markup(
+                url_for("raw_meta", _external=True, _scheme="", **request.args)
+            ),
+        ),
+        200,
+        {"Content-Type": "text/html"},
+    )
+
+
+@app.route("/raw/<int:z>/<int:x>/<int:y>")
+@app.route("/raw/<int:z>/<int:x>/<int:y>@<int:scale>x")
+def raw_render_png(z, x, y, scale=1):
+    tile = Tile(x, y, z)
+
+    headers, data = tiling.render_tile(
+        tile,
+        CATALOG,
+        format=IMAGE_FORMAT,
+        transformation=IMAGE_TRANSFORMATION,
+        expand="meta",
+        scale=scale,
+    )
+
+    headers.update(CATALOG.headers)
+
+    return data, 200, headers
+
+
+@app.route("/raw/<int:z>/<int:x>/<int:y>.tif")
+def raw_render_tif(z, x, y):
+    tile = Tile(x, y, z)
+
+    headers, data = tiling.render_tile(
+        tile, CATALOG, format=GEOTIFF_FORMAT, expand="meta"
+    )
+
+    headers.update(CATALOG.headers)
+
+    return data, 200, headers
+

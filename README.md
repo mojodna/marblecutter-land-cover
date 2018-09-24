@@ -89,9 +89,9 @@ modis = {
 # ESACCI-LC colors
 # http://maps.elie.ucl.ac.be/CCI/viewer/download/ESACCI-LC-Legend.csv
 esacci_lc = {
-    10: (255, 100),
-    11: (255, 100),
-    12: (255, 0),
+    10: (255, 255, 100),
+    11: (255, 255, 100),
+    12: (255, 255, 0),
     20: (170, 240, 240),
     30: (220, 240, 100),
     40: (200, 200, 100),

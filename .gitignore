@@ -17,3 +17,4 @@ production.env
 out.zip
 package-lock.json
 .vscode/
+zappa_settings.json

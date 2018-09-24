@@ -35,22 +35,31 @@ docker run --env-file .env -p 8000:8000 quay.io/mojodna/marblecutter-tilezen
 
 ## Lambda Deployment
 
-Docker is required to create `deps/deps.tgz`, which contains binary dependencies
-and Python packages built for the Lambda runtime.
-
-### Up
-
-[Up](https://github.com/apex/up) uses CloudFormation to deploy and manage Lambda
-functions and API Gateway endpoints. It bundles a reverse proxy so that standard
-web services can be deployed.
+[Zappa](https://github.com/Miserlou/Zappa) is used to deploy
+`marblecutter-land-cover` to AWS Lambda. To create an initial deployment:
 
 ```bash
-make deploy-up
+cp zappa_settings.json.tpl zappa_settings.json
+python3 -m venv venv
+source venv/bin/activate
+pip install -Ur requirements-zappa.txt
+zappa deploy
+```
+
+`DATABASE_URL` must be set and pointed to a PostgreSQL instance with a
+catalog loaded. This can either be set using `aws_environment_variables` in
+`zappa_setting.json` or directly in Lambda (using the AWS console or command
+line).
+
+To update it, run:
+
+```bash
+zappa update
 ```
 
 ### Gotchas
 
-The IAM role assumed by Lambda (created by Up) must have the
+The IAM role assumed by Lambda must have the
 [AmazonS3ReadOnlyAccess](https://console.aws.amazon.com/iam/home?region=us-east-1#policies/arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess)
 policy attached to it and access from target source buckets granted to the
 account being used in order for data to be read.

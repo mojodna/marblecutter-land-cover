@@ -1,0 +1,12 @@
+cachetools
+# marblecutter[color_ramp,postgis,web] ~= 0.3.1
+https://github.com/mojodna/marblecutter/archive/21831c3.tar.gz#egg=marblecutter[postgis,web]
+rasterio[s3] >= 1.0
+
+flask
+flask-cors
+haversine
+mercantile
+numpy
+Pillow
+psycopg2-binary

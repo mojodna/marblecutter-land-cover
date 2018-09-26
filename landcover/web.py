@@ -29,7 +29,7 @@ glacier = 100
 COLORMAP = {
     water: (69, 128, 162),
     forest: (27, 119, 28),
-    shrubland: (173, 164, 127),
+    shrubland: (184, 193, 112),
     herbaceous: (188, 212, 149),
     wetlands: (146, 184, 186),
     cultivated: (215, 214, 114),

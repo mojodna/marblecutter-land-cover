@@ -153,12 +153,13 @@ shrubland = 50
 herbaceous = 70
 cultivated = 80
 wetlands = 90
+glacier = 100
 
 # NLCD
 # https://www.mrlc.gov/nlcd11_leg.php
 nlcd = {
     11: water,  # Open Water
-    12: barren,  # Perennial Ice/Snow
+    12: glacier,  # Perennial Ice/Snow
     21: barren,  # Developed, Open Space
     22: developed,  # Developed, Low Intensity
     23: developed,  # Developed, Medium Intensity
@@ -205,7 +206,7 @@ ccap = {
     22: water,  # Palustrine Aquatic Bed
     23: water,  # Estuarine Aquatic Bed
     24: barren,  # Tundra
-    25: barren,  # Perennial Ice/Snow
+    25: glacier,  # Perennial Ice/Snow
 }
 
 # ESACCI-LC
@@ -247,7 +248,7 @@ esacci_lc = {
     201: barren,  # Consolidated bare areas
     202: barren,  # Unconsolidated bare areas
     210: water,  # Water bodies
-    220: barren,  # Permanent snow and ice
+    220: glacier,  # Permanent snow and ice
 }
 
 # MODIS Land Cover
@@ -268,7 +269,7 @@ modis = {
     12: cultivated,  # "Croplands"
     13: developed,  # "Urban and built-up"
     14: cultivated,  # "Cropland/Natural vegetation mosaic"
-    15: barren,  # "Snow and ice"
+    15: glacier,  # "Snow and ice"
     16: barren,  # "Barren or sparsely vegetated"
     254: nothing,  # "Unclassified"
     255: nothing,  # "Fill Value"

@@ -157,68 +157,68 @@ wetlands = 90
 # NLCD
 # https://www.mrlc.gov/nlcd11_leg.php
 nlcd = {
-    11: water,
-    12: water,
-    21: developed,
-    22: developed,
-    23: developed,
-    24: developed,
-    31: barren,
-    41: forest,
-    42: forest,
-    43: forest,
-    51: shrubland,
-    52: shrubland,
-    71: herbaceous,
-    72: herbaceous,
-    73: herbaceous,
-    74: herbaceous,
-    81: cultivated,
-    82: cultivated,
-    90: wetlands,
-    95: wetlands,
+    11: water,  # Open Water
+    12: barren,  # Perennial Ice/Snow
+    21: barren,  # Developed, Open Space
+    22: developed,  # Developed, Low Intensity
+    23: developed,  # Developed, Medium Intensity
+    24: developed,  # Developed, High Intensity
+    31: barren,  # Barren Land (Rock/Sand/Clay)
+    41: forest,  # Deciduous Forest
+    42: forest,  # Evergreen Forest
+    43: forest,  # Mixed Forest
+    51: shrubland,  # Dwarf Scrub
+    52: shrubland,  # Shrub/Scrub
+    71: herbaceous,  # Grassland/Herbaceous
+    72: herbaceous,  # Sedge/Herbaceous
+    73: herbaceous,  # Lichens
+    74: herbaceous,  # Moss
+    81: cultivated,  # Pasture/Hay
+    82: cultivated,  # Cultivated Crops
+    90: wetlands,  # Woody Wetlands
+    95: wetlands,  # Emergent Herbaceous Wetlands
 }
 
 # ESACCI-LC
 # https://maps.elie.ucl.ac.be/CCI/viewer/download/CCI-LC_Maps_Legend.pdf
 esacci_lc = {
-    10: cultivated,
-    11: cultivated,
-    12: cultivated,
-    20: cultivated,
-    30: cultivated,
-    40: cultivated,
-    50: forest,
-    60: forest,
-    61: forest,
-    62: forest,
-    70: forest,
-    71: forest,
-    72: forest,
-    80: forest,
-    81: forest,
-    82: forest,
-    90: forest,
-    100: shrubland,
-    110: herbaceous,
-    120: shrubland,
-    121: shrubland,
-    122: shrubland,
-    130: herbaceous,
-    140: herbaceous,
-    150: barren,
-    151: barren,
-    152: barren,
-    153: barren,
-    160: wetlands,
-    170: wetlands,
-    180: wetlands,
-    190: developed,
-    200: barren,
-    201: barren,
-    202: barren,
-    210: water,
-    220: water,
+    10: cultivated,  # Cropland, rainfed
+    11: cultivated,  # Herbaceous cover
+    12: cultivated,  # Tree or shrub cover
+    20: cultivated,  # Cropland, irrigated or post-flooding
+    30: cultivated,  # Mosaic cropland (>50%) / natural vegetation (tree, shrub, herbaceous cover) (<50%)
+    40: cultivated,  # Mosaic natural vegetation (tree, shrub, herbaceous cover) (>50%) / cropland (<50%)
+    50: forest,  # Tree cover, broadleaved, evergreen, closed to open (>15%)
+    60: forest,  # Tree cover, broadleaved, deciduous, closed to open (>15%)
+    61: forest,  # Tree cover, broadleaved, deciduous, closed (>40%)
+    62: forest,  # Tree cover, broadleaved, deciduous, open (15‐40%)
+    70: forest,  # Tree cover, needleleaved, evergreen, closed to open (>15%)
+    71: forest,  # Tree cover, needleleaved, evergreen, closed (>40%)
+    72: forest,  # Tree cover, needleleaved, evergreen, open (15‐40%)
+    80: forest,  # Tree cover, needleleaved, deciduous, closed to open (>15%)
+    81: forest,  # Tree cover, needleleaved, deciduous, closed (>40%)
+    82: forest,  # Tree cover, needleleaved, deciduous, open (15‐40%)
+    90: forest,  # Tree cover, mixed leaf type (broadleaved and needleleaved)
+    100: shrubland,  # Mosaic tree and shrub (>50%) / herbaceous cover (<50%)
+    110: herbaceous,  # Mosaic herbaceous cover (>50%) / tree and shrub (<50%)
+    120: shrubland,  # Shrubland
+    121: shrubland,  # Evergreen shrubland
+    122: shrubland,  # Deciduous shrubland
+    130: herbaceous,  # Grassland
+    140: herbaceous,  # Lichens and mosses
+    150: barren,  # Sparse vegetation (tree, shrub, herbaceous cover) (<15%)
+    151: barren,  # Sparse tree (<15%)
+    152: barren,  # Sparse shrub (<15%)
+    153: barren,  # Sparse herbaceous cover (<15%)
+    160: wetlands,  # Tree cover, flooded, fresh or brackish water
+    170: wetlands,  # Tree cover, flooded, saline water
+    180: wetlands,  # Shrub or herbaceous cover, flooded, fresh/saline/brackish water
+    190: developed,  # Urban areas
+    200: barren,  # Bare areas
+    201: barren,  # Consolidated bare areas
+    202: barren,  # Unconsolidated bare areas
+    210: water,  # Water bodies
+    220: barren,  # Permanent snow and ice
 }
 
 # MODIS Land Cover
@@ -239,7 +239,7 @@ modis = {
     12: cultivated,  # "Croplands"
     13: developed,  # "Urban and built-up"
     14: cultivated,  # "Cropland/Natural vegetation mosaic"
-    15: water,  # "Snow and ice"
+    15: barren,  # "Snow and ice"
     16: barren,  # "Barren or sparsely vegetated"
     254: nothing,  # "Unclassified"
     255: nothing,  # "Fill Value"

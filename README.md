@@ -179,6 +179,35 @@ nlcd = {
     95: wetlands,  # Emergent Herbaceous Wetlands
 }
 
+# C-CAP
+# https://coast.noaa.gov/digitalcoast/training/ccap-land-cover-classifications.html
+ccap = {
+    2: developed,  # Developed, High Intensity
+    3: developed,  # Developed, Medium Intensity
+    4: developed,  # Developed, Low Intensity
+    5: barren,  # Developed, Open Space
+    6: cultivated,  # Cultivated Crops
+    7: cultivated,  # Pasture/Hay
+    8: herbaceous,  # Grassland/Herbaceous
+    9: forest,  # Deciduous Forest
+    10: forest,  # Evergreen Forest
+    11: forest,  # Mixed Forest
+    12: shrubland,  # Scrub/Shrub
+    13: wetlands,  # Palustrine Forested Wetland
+    14: wetlands,  # Palustrine Scrub/Shrub Wetland
+    15: wetlands,  # Palustrine Emergent Wetland (Persistent)
+    16: wetlands,  # Estuarine Forested Wetland
+    17: wetlands,  # Estuarine Scrub/Shrub Wetland
+    18: wetlands,  # Estuarine Emergent Wetland
+    19: barren,  # Unconsolidated Shore
+    20: barren,  # Barren Land
+    21: water,  # Open Water
+    22: water,  # Palustrine Aquatic Bed
+    23: water,  # Estuarine Aquatic Bed
+    24: barren,  # Tundra
+    25: barren,  # Perennial Ice/Snow
+}
+
 # ESACCI-LC
 # https://maps.elie.ucl.ac.be/CCI/viewer/download/CCI-LC_Maps_Legend.pdf
 esacci_lc = {

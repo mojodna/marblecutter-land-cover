@@ -174,7 +174,7 @@ nlcd = {
     72: herbaceous,  # Sedge/Herbaceous
     73: herbaceous,  # Lichens
     74: herbaceous,  # Moss
-    81: cultivated,  # Pasture/Hay
+    81: herbaceous,  # Pasture/Hay
     82: cultivated,  # Cultivated Crops
     90: wetlands,  # Woody Wetlands
     95: wetlands,  # Emergent Herbaceous Wetlands
@@ -188,7 +188,7 @@ ccap = {
     4: developed,  # Developed, Low Intensity
     5: barren,  # Developed, Open Space
     6: cultivated,  # Cultivated Crops
-    7: cultivated,  # Pasture/Hay
+    7: herbaceous,  # Pasture/Hay
     8: herbaceous,  # Grassland/Herbaceous
     9: forest,  # Deciduous Forest
     10: forest,  # Evergreen Forest

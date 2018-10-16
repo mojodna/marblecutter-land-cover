@@ -154,10 +154,34 @@ herbaceous = 70
 cultivated = 80
 wetlands = 90
 glacier = 100
+desert = 110
 
 # NLCD
 # https://www.mrlc.gov/nlcd11_leg.php
 nlcd = {
+    11: water,  # Open Water
+    12: glacier,  # Perennial Ice/Snow
+    21: barren,  # Developed, Open Space
+    22: developed,  # Developed, Low Intensity
+    23: developed,  # Developed, Medium Intensity
+    24: developed,  # Developed, High Intensity
+    31: desert,  # Barren Land (Rock/Sand/Clay)
+    41: forest,  # Deciduous Forest
+    42: forest,  # Evergreen Forest
+    43: forest,  # Mixed Forest
+    51: shrubland,  # Dwarf Scrub
+    52: shrubland,  # Shrub/Scrub
+    71: herbaceous,  # Grassland/Herbaceous
+    72: herbaceous,  # Sedge/Herbaceous
+    73: herbaceous,  # Lichens
+    74: herbaceous,  # Moss
+    81: herbaceous,  # Pasture/Hay
+    82: cultivated,  # Cultivated Crops
+    90: wetlands,  # Woody Wetlands
+    95: wetlands,  # Emergent Herbaceous Wetlands
+}
+
+nlcd_ak = {
     11: water,  # Open Water
     12: glacier,  # Perennial Ice/Snow
     21: barren,  # Developed, Open Space
@@ -200,8 +224,8 @@ ccap = {
     16: wetlands,  # Estuarine Forested Wetland
     17: wetlands,  # Estuarine Scrub/Shrub Wetland
     18: wetlands,  # Estuarine Emergent Wetland
-    19: barren,  # Unconsolidated Shore
-    20: barren,  # Barren Land
+    19: desert,  # Unconsolidated Shore
+    20: desert,  # Barren Land
     21: water,  # Open Water
     22: water,  # Palustrine Aquatic Bed
     23: water,  # Estuarine Aquatic Bed
@@ -212,6 +236,46 @@ ccap = {
 # ESACCI-LC
 # https://maps.elie.ucl.ac.be/CCI/viewer/download/CCI-LC_Maps_Legend.pdf
 esacci_lc = {
+    10: cultivated,  # Cropland, rainfed
+    11: cultivated,  # Herbaceous cover
+    12: cultivated,  # Tree or shrub cover
+    20: cultivated,  # Cropland, irrigated or post-flooding
+    30: cultivated,  # Mosaic cropland (>50%) / natural vegetation (tree, shrub, herbaceous cover) (<50%)
+    40: cultivated,  # Mosaic natural vegetation (tree, shrub, herbaceous cover) (>50%) / cropland (<50%)
+    50: forest,  # Tree cover, broadleaved, evergreen, closed to open (>15%)
+    60: forest,  # Tree cover, broadleaved, deciduous, closed to open (>15%)
+    61: forest,  # Tree cover, broadleaved, deciduous, closed (>40%)
+    62: forest,  # Tree cover, broadleaved, deciduous, open (15‐40%)
+    70: forest,  # Tree cover, needleleaved, evergreen, closed to open (>15%)
+    71: forest,  # Tree cover, needleleaved, evergreen, closed (>40%)
+    72: forest,  # Tree cover, needleleaved, evergreen, open (15‐40%)
+    80: forest,  # Tree cover, needleleaved, deciduous, closed to open (>15%)
+    81: forest,  # Tree cover, needleleaved, deciduous, closed (>40%)
+    82: forest,  # Tree cover, needleleaved, deciduous, open (15‐40%)
+    90: forest,  # Tree cover, mixed leaf type (broadleaved and needleleaved)
+    100: shrubland,  # Mosaic tree and shrub (>50%) / herbaceous cover (<50%)
+    110: herbaceous,  # Mosaic herbaceous cover (>50%) / tree and shrub (<50%)
+    120: shrubland,  # Shrubland
+    121: shrubland,  # Evergreen shrubland
+    122: shrubland,  # Deciduous shrubland
+    130: herbaceous,  # Grassland
+    140: herbaceous,  # Lichens and mosses
+    150: barren,  # Sparse vegetation (tree, shrub, herbaceous cover) (<15%)
+    151: barren,  # Sparse tree (<15%)
+    152: barren,  # Sparse shrub (<15%)
+    153: barren,  # Sparse herbaceous cover (<15%)
+    160: wetlands,  # Tree cover, flooded, fresh or brackish water
+    170: wetlands,  # Tree cover, flooded, saline water
+    180: wetlands,  # Shrub or herbaceous cover, flooded, fresh/saline/brackish water
+    190: developed,  # Urban areas
+    200: desert,  # Bare areas
+    201: desert,  # Consolidated bare areas
+    202: desert,  # Unconsolidated bare areas
+    210: water,  # Water bodies
+    220: glacier,  # Permanent snow and ice
+}
+
+esacci_lc_mid_lat = {
     10: cultivated,  # Cropland, rainfed
     11: cultivated,  # Herbaceous cover
     12: cultivated,  # Tree or shrub cover
@@ -270,7 +334,7 @@ modis = {
     13: developed,  # "Urban and built-up"
     14: cultivated,  # "Cropland/Natural vegetation mosaic"
     15: glacier,  # "Snow and ice"
-    16: barren,  # "Barren or sparsely vegetated"
+    16: desert,  # "Barren or sparsely vegetated"
     254: nothing,  # "Unclassified"
     255: nothing,  # "Fill Value"
 }

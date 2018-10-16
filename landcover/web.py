@@ -25,6 +25,7 @@ herbaceous = 70
 cultivated = 80
 wetlands = 90
 glacier = 100
+desert = 110
 
 COLORMAP = {
     water: (69, 128, 162),
@@ -36,6 +37,7 @@ COLORMAP = {
     developed: (203, 8, 20),
     barren: (198, 180, 134),
     glacier: (230, 239, 253),
+    desert: (232, 211, 157),
 }
 
 LOG = logging.getLogger(__name__)

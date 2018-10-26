@@ -1,6 +1,6 @@
 cachetools
 # marblecutter[color_ramp,postgis,web] ~= 0.3.1
-https://github.com/mojodna/marblecutter/archive/21831c3.tar.gz#egg=marblecutter[postgis,web]
+https://github.com/mojodna/marblecutter/archive/83fc8d5.tar.gz#egg=marblecutter[postgis,web]
 rasterio[s3] >= 1.0
 
 flask

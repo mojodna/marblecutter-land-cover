@@ -28,6 +28,8 @@ glacier = 100
 desert = 110
 
 COLORMAP = {
+    # paint nothing as water; this happens after source merging, so overlap isn't a concern
+    nothing: (69, 128, 162),
     water: (69, 128, 162),
     forest: (27, 119, 28),
     shrubland: (184, 193, 112),

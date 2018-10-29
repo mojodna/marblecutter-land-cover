@@ -14,19 +14,23 @@ ENV VSI_CACHE_SIZE 536870912
 # override this accordingly; should be 2-4x $(nproc)
 ENV WEB_CONCURRENCY 4
 
-RUN apt-get update \
-  && apt-get upgrade -y \
-  && apt-get install -y --no-install-recommends \
+RUN apt update \
+  && apt install -y software-properties-common \
+  && add-apt-repository ppa:deadsnakes/ppa \
+  && apt update \
+  && apt upgrade -y \
+  && apt install -y --no-install-recommends \
     build-essential \
     ca-certificates \
     cython3 \
     git \
-    python3-dev \
+    python3.6-dev \
     python3-pip \
     python3-wheel \
     python3-setuptools \
   && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/* \
+  && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
 
 WORKDIR /opt/marblecutter
 

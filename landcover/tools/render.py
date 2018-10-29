@@ -2,17 +2,18 @@
 from __future__ import print_function
 
 import argparse
-import logging
-from concurrent import futures
-import multiprocessing
-import itertools
-from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
-from time import gmtime
-from io import BytesIO
-import json
-from urllib.parse import urlparse
-from os import makedirs, path
 import hashlib
+import itertools
+import json
+import logging
+import multiprocessing
+from bisect import bisect_right
+from concurrent import futures
+from io import BytesIO
+from os import makedirs, path
+from time import gmtime
+from urllib.parse import urlparse
+from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 import boto3
 import botocore
@@ -67,12 +68,11 @@ def upstream_sources_for_tile(tile, catalog, min_zoom=None, max_zoom=None):
     )
 
 
-def generate_tiles(tile, max_zoom, index_zooms=None):
-    index_zooms = None
+def generate_tiles(tile, max_zoom, materialize_zooms=None):
     tiles = [tile]
 
     for z in range(tile.z, max_zoom + 1):
-        if index_zooms is None or z in index_zooms:
+        if materialize_zooms is None or z in materialize_zooms:
             a, tiles = itertools.tee(tiles, 2)
 
             yield from a
@@ -80,12 +80,75 @@ def generate_tiles(tile, max_zoom, index_zooms=None):
         tiles = itertools.chain.from_iterable(mercantile.children(t) for t in tiles)
 
 
+def write(tiles, root, max_zoom, target, hash=False):
+    date_time = gmtime()[0:6]
+    out = BytesIO()
+    with ZipFile(out, "w", ZIP_DEFLATED, allowZip64=True) as archive:
+        archive.comment = json.dumps(
+            {
+                "name": "Land Cover",
+                "description": "Unified land cover, derived from MODIS-LC, ESACCI-LC, NLCD, and C-CAP.",
+                "minzoom": root.z,
+                "maxzoom": max_zoom,
+                "bbox": mercantile.bounds(root),
+                "formats": {"tif": "image/tiff"},
+                # omitted, as they don't help at the archive level
+                # "overviews": True,
+                # "metatile": 2 ** max_zoom,
+                "root": "{}/{}/{}".format(root.z, root.x, root.y),
+            }
+        ).encode("utf-8")
+
+        for tile, (_, data) in tiles:
+            logger.info("%d/%d/%d", tile.z, tile.x, tile.y)
+
+            info = ZipInfo("{}/{}/{}.tif".format(tile.z, tile.x, tile.y), date_time)
+            info.external_attr = 0o755 << 16
+            archive.writestr(info, data, ZIP_DEFLATED)
+
+    url = urlparse(target)
+
+    if url.scheme in ("", "file"):
+        target = path.join(
+            path.abspath(url.netloc + url.path),
+            str(root.z),
+            str(root.x),
+            "{}.zip".format(root.y),
+        )
+
+        if not path.isdir(path.dirname(target)):
+            makedirs(path.dirname(target))
+
+        with open(target, "wb") as archive:
+            archive.write(out.getvalue())
+    elif url.scheme == "s3":
+        bucket = url.netloc
+        if hash:
+            k = "{}/{}/{}".format(root.z, root.x, root.y)
+            h = hashlib.md5(k.encode("utf-8")).hexdigest()[:5]
+            key = path.join(url.path[1:], "{}/{}.zip".format(h, k))
+        else:
+            key = path.join(
+                url.path[1:], "{}/{}/{}.zip".format(root.z, root.x, root.y)
+            )
+
+        try:
+            S3.put_object(
+                Body=out.getvalue(),
+                Bucket=bucket,
+                Key=key,
+                ContentType="image/tiff",
+            )
+        except botocore.exceptions.ClientError as e:
+            logger.exception(e)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-x", type=int, required=True)
     parser.add_argument("-y", type=int, required=True)
     parser.add_argument("--zoom", "-z", type=int, required=True)
     parser.add_argument("--max-zoom", "-Z", type=int, required=True)
+    parser.add_argument("--materialize", "-m", type=int, action="append")
     parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument(
         "--concurrency", "-c", type=int, default=multiprocessing.cpu_count() * 2
@@ -102,18 +165,19 @@ if __name__ == "__main__":
     concurrency = args.concurrency
     min_zoom = args.zoom
     max_zoom = args.max_zoom
-    hash = args.hash
+    materialize_zooms = args.materialize or []
+    if args.zoom not in materialize_zooms:
+        materialize_zooms = [args.zoom] + materialize_zooms
 
     logger.info(
         "Caching sources for root tile %s from zoom %d to %d", root, min_zoom, max_zoom
     )
 
+    # TODO --cache-sources
     catalog = build_catalog(root, min_zoom, max_zoom)
 
     def render(tile_with_sources):
         tile, sources = tile_with_sources
-        # logger.debug("sources: %s", list(map(lambda x: x["url"], sources)))
-        logger.debug("rendering %d/%d/%d", tile.z, tile.x, tile.y)
 
         with Timer() as t:
             headers, data = tiling.render_tile_from_sources(
@@ -121,7 +185,7 @@ if __name__ == "__main__":
             )
 
         logger.debug(
-            "%d/%d/%d) Took %.03fs to render tile (%s bytes), %s",
+            "(%d/%d/%d) Took %.03fs to render tile (%s bytes), %s",
             tile.z,
             tile.x,
             tile.y,
@@ -143,66 +207,18 @@ if __name__ == "__main__":
         return (tile, list(catalog.get_sources(bounds, resolution)))
 
     with futures.ProcessPoolExecutor(max_workers=concurrency) as executor:
-        # logger.info("%d/%d/%d", root.z, root.x, root.y)
-        date_time = gmtime()[0:6]
-        out = BytesIO()
-        with ZipFile(out, "w", ZIP_DEFLATED, allowZip64=True) as archive:
-            archive.comment = json.dumps(
-                {
-                    "name": "Land Cover",
-                    "description": "Unified land cover, derived from MODIS-LC, ESACCI-LC, NLCD, and C-CAP.",
-                    "minzoom": min_zoom,
-                    "maxzoom": max_zoom,
-                    "bbox": mercantile.bounds(root),
-                    "formats": {"tif": "image/tiff"},
-                    # omitted, as they don't help at the archive level
-                    # "overviews": True,
-                    # "metatile": 2 ** max_zoom,
-                    "root": "{}/{}/{}".format(root.z, root.x, root.y),
-                }
-            ).encode("utf-8")
+        for materialized_tile in generate_tiles(root, args.max_zoom, materialize_zooms):
+            # find the next materialized zoom
+            idx = bisect_right(materialize_zooms, materialized_tile.z)
+            if idx != len(materialize_zooms):
+                # treat the zoom before the next materialized zoom as the max
+                max_zoom = materialize_zooms[idx] - 1
+            else:
+                # out of materialized zooms
+                max_zoom = args.max_zoom
 
-            for tile, (headers, data) in executor.map(
-                render, map(sources_for_tile, generate_tiles(root, max_zoom))
-            ):
-                logger.info("%d/%d/%d", tile.z, tile.x, tile.y)
-
-                info = ZipInfo("{}/{}/{}.tif".format(tile.z, tile.x, tile.y), date_time)
-                info.external_attr = 0o755 << 16
-                archive.writestr(info, data, ZIP_DEFLATED)
-
-        url = urlparse(args.target)
-
-        if url.scheme in ("", "file"):
-            target = path.join(
-                path.abspath(url.netloc + url.path),
-                str(root.z),
-                str(root.x),
-                "{}.zip".format(root.y),
+            tiles = executor.map(
+                render, map(sources_for_tile, generate_tiles(materialized_tile, max_zoom))
             )
 
-            if not path.isdir(path.dirname(target)):
-                makedirs(path.dirname(target))
-
-            with open(target, "wb") as archive:
-                archive.write(out.getvalue())
-        elif url.scheme == "s3":
-            bucket = url.netloc
-            if hash:
-                k = "{}/{}/{}".format(root.z, root.x, root.y)
-                h = hashlib.md5(k.encode("utf-8")).hexdigest()[:5]
-                key = path.join(url.path[1:], "{}/{}.zip".format(h, k))
-            else:
-                key = path.join(
-                    url.path[1:], "{}/{}/{}.zip".format(root.z, root.x, root.y)
-                )
-
-            try:
-                S3.put_object(
-                    Body=out.getvalue(),
-                    Bucket=bucket,
-                    Key=key,
-                    ContentType="image/tiff",
-                )
-            except botocore.exceptions.ClientError as e:
-                logger.exception(e)
+            write(tiles, materialized_tile, max_zoom, args.target, args.hash)

@@ -89,7 +89,7 @@ def write(tiles, root, max_zoom, target, hash=False):
                 "description": "Unified land cover, derived from MODIS-LC, ESACCI-LC, NLCD, and C-CAP.",
                 "minzoom": root.z,
                 "maxzoom": max_zoom,
-                "bbox": mercantile.bounds(root),
+                "bounds": mercantile.bounds(root),
                 "formats": {"tif": "image/tiff"},
                 # omitted, as they don't help at the archive level
                 # "overviews": True,

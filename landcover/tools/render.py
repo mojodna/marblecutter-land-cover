@@ -35,17 +35,16 @@ logging.getLogger("botocore.credentials").setLevel(logging.WARNING)
 logging.getLogger("marblecutter.mosaic").setLevel(logging.WARNING)
 logging.getLogger("rasterio._base").setLevel(logging.WARNING)
 
-S3 = boto3.client("s3")
-
+CATALOG = PostGISCatalog(table="land_cover")
 GEOTIFF_FORMAT = GeoTIFF(colormap=COLORMAP)
+S3 = boto3.client("s3")
 
 
 def build_catalog(tile, min_zoom, max_zoom):
-    upstream_catalog = PostGISCatalog(table="land_cover")
     catalog = SpatialiteCatalog()
 
     for source in upstream_sources_for_tile(
-        tile, upstream_catalog, min_zoom=min_zoom, max_zoom=max_zoom
+        tile, CATALOG, min_zoom=min_zoom, max_zoom=max_zoom
     ):
         catalog.add_source(source)
 
@@ -154,6 +153,7 @@ if __name__ == "__main__":
         "--concurrency", "-c", type=int, default=multiprocessing.cpu_count() * 2
     )
     parser.add_argument("--hash", "-H", action="store_true")
+    parser.add_argument("--cache-sources", "-l", action="store_true")
     parser.add_argument("target", default="file://./", nargs="?")
 
     args = parser.parse_args()
@@ -169,12 +169,13 @@ if __name__ == "__main__":
     if args.zoom not in materialize_zooms:
         materialize_zooms = [args.zoom] + materialize_zooms
 
-    logger.info(
-        "Caching sources for root tile %s from zoom %d to %d", root, min_zoom, max_zoom
-    )
-
-    # TODO --cache-sources
-    catalog = build_catalog(root, min_zoom, max_zoom)
+    if args.cache_sources:
+        logger.info(
+            "Caching sources for root tile %s from zoom %d to %d", root, min_zoom, max_zoom
+        )
+        catalog = build_catalog(root, min_zoom, max_zoom)
+    else:
+        catalog = CATALOG
 
     def render(tile_with_sources):
         tile, sources = tile_with_sources

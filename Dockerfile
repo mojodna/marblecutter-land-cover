@@ -36,6 +36,7 @@ RUN apt update \
 WORKDIR /opt/marblecutter
 
 COPY requirements-server.txt /opt/marblecutter/
+COPY requirements-tools.txt /opt/marblecutter/
 COPY requirements.txt /opt/marblecutter/
 
 RUN pip3 install -U numpy && \

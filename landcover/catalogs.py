@@ -167,6 +167,7 @@ SELECT
   ST_Area(ST_Intersection(uncovered.geom, footprints.geom)) /
   ST_Area(bbox.geom) coverage,
   AsGeoJSON(footprints.geom) geom,
+  AsGeoJSON(ST_Intersection(footprints.mask, bbox.geom)) mask,
   AsGeoJSON(ST_Difference(uncovered.geom, footprints.geom)) uncovered
 FROM bbox, date_range, footprints
 JOIN uncovered ON ST_Intersects(footprints.geom, uncovered.geom)
@@ -228,9 +229,13 @@ LIMIT 1
                         band,
                         priority,
                         coverage,
-                        geom,
+                        _,
+                        mask,
                         uncovered,
                     ) = record
+
+                    if mask is not None:
+                        mask = json.loads(mask)
 
                     yield Source(
                         url,
@@ -243,6 +248,7 @@ LIMIT 1
                         band,
                         priority,
                         coverage,
+                        mask=mask,
                     )
 
                     urls.add(url)

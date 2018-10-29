@@ -42,7 +42,7 @@ docker run --env-file .env -p 8000:8000 quay.io/mojodna/marblecutter-tilezen
 cp zappa_settings.json.tpl zappa_settings.json
 python3 -m venv venv
 source venv/bin/activate
-pip install -Ur requirements-zappa.txt
+pip install -Ur requirements.txt
 zappa deploy
 ```
 

@@ -11,3 +11,13 @@ services:
       - ~/.aws:/nonexistent/.aws
     ports:
       - "8000:8000"
+  tools:
+    build: .
+    entrypoint: /bin/bash
+    environment:
+      - PYTHONPATH=.
+    env_file: .env
+    volumes:
+      - .:/opt/marblecutter/
+      - ../marblecutter/marblecutter:/usr/local/lib/python3.6/dist-packages/marblecutter
+      - ~/.aws:/nonexistent/.aws

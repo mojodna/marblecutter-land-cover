@@ -1,5 +1,3 @@
 -r requirements.txt
 
-gevent
-gunicorn
 git+git://github.com/karlb/pysqlite3

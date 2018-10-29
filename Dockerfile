@@ -28,6 +28,7 @@ RUN apt update \
     python3-pip \
     python3-wheel \
     python3-setuptools \
+    libsqlite3-mod-spatialite \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/* \
   && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
@@ -39,6 +40,7 @@ COPY requirements.txt /opt/marblecutter/
 
 RUN pip3 install -U numpy && \
   pip3 install -r requirements-server.txt && \
+  pip3 install -r requirements-tools.txt && \
   rm -rf /root/.cache
 
 COPY landcover /opt/marblecutter/landcover

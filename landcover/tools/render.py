@@ -56,7 +56,7 @@ def build_catalog(tile, min_zoom, max_zoom):
 def upstream_sources_for_tile(tile, catalog, min_zoom=None, max_zoom=None):
     """Render a tile's source footprints."""
     bounds = Bounds(mercantile.bounds(tile), WGS84_CRS)
-    shape = (256, 256)
+    shape = (512, 512)
     resolution = get_resolution_in_meters(bounds, shape)
 
     return catalog.get_sources(

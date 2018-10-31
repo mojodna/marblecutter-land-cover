@@ -171,7 +171,7 @@ SELECT
   AsGeoJSON(ST_Difference(uncovered.geom, ST_Difference(footprints.geom, footprints.mask))) uncovered
 FROM bbox, date_range, footprints
 JOIN uncovered ON ST_Intersects(footprints.geom, uncovered.geom)
-WHERE footprints.url NOT IN ({url_placeholders})
+WHERE footprints.source || ' - ' || footprints.url NOT IN ({id_placeholders})
   AND ? BETWEEN min_zoom AND max_zoom
 ORDER BY
   10 * coalesce(footprints.priority, 0.5) *
@@ -206,13 +206,13 @@ LIMIT 1
             )
 
             uncovered = bbox
-            urls = set()
+            ids = set()
 
             while True:
-                url_placeholders = ", ".join("?" * len(urls))
+                id_placeholders = ", ".join("?" * len(ids))
                 cursor.execute(
-                    query.format(url_placeholders=url_placeholders),
-                    (bbox, uncovered) + tuple(urls) + (zoom, min(resolution)),
+                    query.format(id_placeholders=id_placeholders),
+                    (bbox, uncovered) + tuple(ids) + (zoom, min(resolution)),
                 )
 
                 count = 0
@@ -251,7 +251,7 @@ LIMIT 1
                         mask=mask,
                     )
 
-                    urls.add(url)
+                    ids.add(source + " - " + url)
 
                 if count == 0 or uncovered is None:
                     break

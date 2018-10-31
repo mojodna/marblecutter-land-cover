@@ -6,6 +6,7 @@ import hashlib
 import itertools
 import json
 import logging
+import math
 import multiprocessing
 from bisect import bisect_right
 from concurrent import futures
@@ -67,8 +68,13 @@ def upstream_sources_for_tile(tile, catalog, min_zoom=None, max_zoom=None):
     )
 
 
-def generate_tiles(tile, max_zoom, materialize_zooms=None):
-    tiles = [tile]
+def generate_tiles(tile, max_zoom, metatile=1, materialize_zooms=None):
+    tiles = []
+    metatile = min(metatile, 2 ** tile.z)
+
+    for dx in range(0, metatile):
+        for dy in range(0, metatile):
+            tiles.append(Tile(tile.x + dx, tile.y + dy, tile.z))
 
     for z in range(tile.z, max_zoom + 1):
         if materialize_zooms is None or z in materialize_zooms:
@@ -79,29 +85,28 @@ def generate_tiles(tile, max_zoom, materialize_zooms=None):
         tiles = itertools.chain.from_iterable(mercantile.children(t) for t in tiles)
 
 
-def write(tiles, root, max_zoom, target, hash=False):
+def subpyramids(tile, max_zoom, metatile=1, materialize_zooms=None):
+    return filter(lambda t: t.x % metatile == 0 and t.y % metatile == 0, generate_tiles(tile, max_zoom, metatile, materialize_zooms))
+
+
+# TODO create_archive / write to facilitate metadata writes
+def write(tiles, root, max_zoom, target, meta, hash=False):
+    meta["minzoom"] = root.z
+    meta["maxzoom"] = max_zoom
+    # TODO this is wrong; should account for metatiles
+    meta["bounds"] = mercantile.bounds(root)
+    meta["root"] = "{}/{}/{}".format(root.z, root.x, root.y)
+
     date_time = gmtime()[0:6]
     out = BytesIO()
+
     with ZipFile(out, "w", ZIP_DEFLATED, allowZip64=True) as archive:
-        archive.comment = json.dumps(
-            {
-                "name": "Land Cover",
-                "description": "Unified land cover, derived from MODIS-LC, ESACCI-LC, NLCD, and C-CAP.",
-                "minzoom": root.z,
-                "maxzoom": max_zoom,
-                "bounds": mercantile.bounds(root),
-                "formats": {"tif": "image/tiff"},
-                # omitted, as they don't help at the archive level
-                # "overviews": True,
-                # "metatile": 2 ** max_zoom,
-                "root": "{}/{}/{}".format(root.z, root.x, root.y),
-            }
-        ).encode("utf-8")
+        archive.comment = json.dumps(meta).encode("utf-8")
 
         for tile, (_, data) in tiles:
             logger.info("%d/%d/%d", tile.z, tile.x, tile.y)
 
-            info = ZipInfo("{}/{}/{}.tif".format(tile.z, tile.x, tile.y), date_time)
+            info = ZipInfo("{}/{}/{}@2x.tif".format(tile.z, tile.x, tile.y), date_time)
             info.external_attr = 0o755 << 16
             archive.writestr(info, data, ZIP_DEFLATED)
 
@@ -141,6 +146,16 @@ def write(tiles, root, max_zoom, target, hash=False):
         except botocore.exceptions.ClientError as e:
             logger.exception(e)
 
+
+def power_of_2(value):
+    value = int(value)
+
+    if math.floor(math.log2(value)) != math.ceil(math.log2(value)):
+        raise argparse.ArgumentTypeError("%s must be a power of 2" % value)
+
+    return value
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-x", type=int, required=True)
@@ -148,6 +163,7 @@ if __name__ == "__main__":
     parser.add_argument("--zoom", "-z", type=int, required=True)
     parser.add_argument("--max-zoom", "-Z", type=int, required=True)
     parser.add_argument("--materialize", "-m", type=int, action="append")
+    parser.add_argument("--metatile", "-M", type=power_of_2, default=1)
     parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument(
         "--concurrency", "-c", type=int, default=multiprocessing.cpu_count() * 2
@@ -165,6 +181,7 @@ if __name__ == "__main__":
     concurrency = args.concurrency
     min_zoom = args.zoom
     max_zoom = args.max_zoom
+    metatile = args.metatile
     materialize_zooms = args.materialize or []
     if args.zoom not in materialize_zooms:
         materialize_zooms = [args.zoom] + materialize_zooms
@@ -207,8 +224,23 @@ if __name__ == "__main__":
         # convert sources to a list to avoid passing the generator across thread boundaries
         return (tile, list(catalog.get_sources(bounds, resolution)))
 
+    meta = {
+        "name": "Land Cover",
+        "description": "Unified land cover, derived from MODIS-LC, ESACCI-LC, NLCD, and C-CAP.",
+        "minzoom": min_zoom,
+        "maxzoom": max_zoom,
+        "bounds": mercantile.bounds(root),
+        "formats": {"tif": "image/tiff"},
+        "minscale": 2,
+        "maxscale": 2,
+        "root": "{}/{}/{}".format(root.z, root.x, root.y),
+    }
+
+    if metatile > 1:
+        meta["metatile"] = metatile
+
     with futures.ProcessPoolExecutor(max_workers=concurrency) as executor:
-        for materialized_tile in generate_tiles(root, args.max_zoom, materialize_zooms):
+        for materialized_tile in subpyramids(root, args.max_zoom, metatile, materialize_zooms):
             # find the next materialized zoom
             idx = bisect_right(materialize_zooms, materialized_tile.z)
             if idx != len(materialize_zooms):
@@ -218,8 +250,10 @@ if __name__ == "__main__":
                 # out of materialized zooms
                 max_zoom = args.max_zoom
 
+            logger.info("Rendering %d/%d/%d to zoom %d", materialized_tile.z, materialized_tile.x, materialized_tile.y, max_zoom)
+
             tiles = executor.map(
-                render, map(sources_for_tile, generate_tiles(materialized_tile, max_zoom))
+                render, map(sources_for_tile, generate_tiles(materialized_tile, max_zoom, metatile))
             )
 
-            write(tiles, materialized_tile, max_zoom, args.target, args.hash)
+            write(tiles, materialized_tile, max_zoom, args.target, meta, args.hash)

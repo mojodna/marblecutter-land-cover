@@ -90,10 +90,21 @@ def subpyramids(tile, max_zoom, metatile=1, materialize_zooms=None):
 
 
 def create_archive(tiles, root, max_zoom, meta):
+    # expand bounds
+    roots = generate_tiles(root, root.z, meta["metatile"])
+
+    min_x, min_y, max_x, max_y = mercantile.bounds(root)
+
+    for r in roots:
+        l_min_x, l_min_y, l_max_x, l_max_y = mercantile.bounds(r)
+        min_x = min(min_x, l_min_x)
+        max_x = max(max_x, l_max_x)
+        min_y = min(min_y, l_min_y)
+        max_y = max(max_y, l_max_y)
+
     meta["minzoom"] = root.z
     meta["maxzoom"] = max_zoom
-    # TODO this is wrong; should account for metatiles
-    meta["bounds"] = mercantile.bounds(root)
+    meta["bounds"] = [min_x, min_y, max_x, max_y]
     meta["root"] = "{}/{}/{}".format(root.z, root.x, root.y)
 
     date_time = gmtime()[0:6]

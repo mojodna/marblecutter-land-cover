@@ -89,8 +89,7 @@ def subpyramids(tile, max_zoom, metatile=1, materialize_zooms=None):
     return filter(lambda t: t.x % metatile == 0 and t.y % metatile == 0, generate_tiles(tile, max_zoom, metatile, materialize_zooms))
 
 
-# TODO create_archive / write to facilitate metadata writes
-def write(tiles, root, max_zoom, target, meta, hash=False):
+def create_archive(tiles, root, max_zoom, meta):
     meta["minzoom"] = root.z
     meta["maxzoom"] = max_zoom
     # TODO this is wrong; should account for metatiles
@@ -110,35 +109,27 @@ def write(tiles, root, max_zoom, target, meta, hash=False):
             info.external_attr = 0o755 << 16
             archive.writestr(info, data, ZIP_DEFLATED)
 
+    return out.getvalue()
+
+
+def write(body, target):
     url = urlparse(target)
 
     if url.scheme in ("", "file"):
-        target = path.join(
-            path.abspath(url.netloc + url.path),
-            str(root.z),
-            str(root.x),
-            "{}.zip".format(root.y),
-        )
+        target = path.abspath(url.netloc + url.path)
 
         if not path.isdir(path.dirname(target)):
             makedirs(path.dirname(target))
 
         with open(target, "wb") as archive:
-            archive.write(out.getvalue())
+            archive.write(body)
     elif url.scheme == "s3":
         bucket = url.netloc
-        if hash:
-            k = "{}/{}/{}".format(root.z, root.x, root.y)
-            h = hashlib.md5(k.encode("utf-8")).hexdigest()[:5]
-            key = path.join(url.path[1:], "{}/{}.zip".format(h, k))
-        else:
-            key = path.join(
-                url.path[1:], "{}/{}/{}.zip".format(root.z, root.x, root.y)
-            )
+        key = url.path[1:]
 
         try:
             S3.put_object(
-                Body=out.getvalue(),
+                Body=body,
                 Bucket=bucket,
                 Key=key,
                 ContentType="image/tiff",
@@ -233,11 +224,20 @@ if __name__ == "__main__":
         "formats": {"tif": "image/tiff"},
         "minscale": 2,
         "maxscale": 2,
-        "root": "{}/{}/{}".format(root.z, root.x, root.y),
     }
 
     if metatile > 1:
         meta["metatile"] = metatile
+
+    source = path.join(args.target, "{z}", "{x}", "{y}.zip")
+    if args.hash:
+        source = path.join(args.target, "{h}", "{z}", "{x}", "{y}.zip")
+
+    root_meta = meta.copy()
+    root_meta["materializedZooms"] = materialize_zooms
+    root_meta["source"] = source
+
+    write(json.dumps(root_meta), path.join(args.target, "meta.json"))
 
     with futures.ProcessPoolExecutor(max_workers=concurrency) as executor:
         for materialized_tile in subpyramids(root, args.max_zoom, metatile, materialize_zooms):
@@ -256,4 +256,11 @@ if __name__ == "__main__":
                 render, map(sources_for_tile, generate_tiles(materialized_tile, max_zoom, metatile))
             )
 
-            write(tiles, materialized_tile, max_zoom, args.target, meta, args.hash)
+            archive = create_archive(tiles, materialized_tile, max_zoom, meta.copy())
+
+            key = "{}/{}/{}".format(materialized_tile.z, materialized_tile.x, materialized_tile.y)
+            if args.hash:
+                h = hashlib.md5(key.encode("utf-8")).hexdigest()[:5]
+                key = "{}/{}".format(h, key)
+
+            write(archive, path.join(args.target, "{}.zip".format(key)))

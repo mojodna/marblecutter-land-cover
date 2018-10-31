@@ -164,11 +164,11 @@ SELECT
   acquired_at,
   null band, -- for Source constructor compatibility
   priority,
-  ST_Area(ST_Intersection(uncovered.geom, footprints.geom)) /
+  ST_Area(ST_Intersection(uncovered.geom, ST_Difference(footprints.geom, footprints.mask))) /
   ST_Area(bbox.geom) coverage,
-  AsGeoJSON(footprints.geom) geom,
+  AsGeoJSON(ST_Intersection(bbox.geom, footprints.geom)) geom,
   AsGeoJSON(ST_Intersection(footprints.mask, bbox.geom)) mask,
-  AsGeoJSON(ST_Difference(uncovered.geom, footprints.geom)) uncovered
+  AsGeoJSON(ST_Difference(uncovered.geom, ST_Difference(footprints.geom, footprints.mask))) uncovered
 FROM bbox, date_range, footprints
 JOIN uncovered ON ST_Intersects(footprints.geom, uncovered.geom)
 WHERE footprints.url NOT IN ({url_placeholders})

@@ -199,6 +199,8 @@ if __name__ == "__main__":
     if args.zoom not in materialize_zooms:
         materialize_zooms = [args.zoom] + materialize_zooms
 
+    materialize_zooms = list(filter(lambda z: z <= max_zoom, materialize_zooms))
+
     if args.cache_sources:
         logger.info(
             "Caching sources for root tile %s from zoom %d to %d", root, min_zoom, max_zoom

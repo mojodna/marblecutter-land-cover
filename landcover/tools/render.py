@@ -136,8 +136,13 @@ def write(body, target):
         if not path.isdir(path.dirname(target)):
             makedirs(path.dirname(target))
 
-        with open(target, "wb") as archive:
-            archive.write(body)
+        if isinstance(body, str):
+            mode = "w"
+        else:
+            mode = "wb"
+
+        with open(target, mode) as out:
+            out.write(body)
     elif url.scheme == "s3":
         bucket = url.netloc
         key = url.path[1:]

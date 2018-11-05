@@ -25,6 +25,7 @@ from marblecutter.catalogs.postgis import PostGISCatalog
 from marblecutter.formats.geotiff import GeoTIFF
 from marblecutter.formats.png import PNG
 from marblecutter.stats import Timer
+from marblecutter.tiling import WEB_MERCATOR_CRS
 from marblecutter.transformations import Colormap
 from marblecutter.utils import Bounds
 from mercantile import Tile
@@ -59,7 +60,7 @@ def build_catalog(tile, min_zoom, max_zoom):
 # TODO fold this upstream, e.g. footprints.something
 def upstream_sources_for_tile(tile, catalog, min_zoom=None, max_zoom=None):
     """Render a tile's source footprints."""
-    bounds = Bounds(mercantile.bounds(tile), WGS84_CRS)
+    bounds = Bounds(mercantile.xy_bounds(tile), WEB_MERCATOR_CRS)
     shape = (512, 512)
     resolution = get_resolution_in_meters(bounds, shape)
 
@@ -241,7 +242,7 @@ if __name__ == "__main__":
 
     def sources_for_tile(tile):
         """Render a tile's source footprints."""
-        bounds = Bounds(mercantile.bounds(tile), WGS84_CRS)
+        bounds = Bounds(mercantile.xy_bounds(tile), WEB_MERCATOR_CRS)
         # TODO scale
         shape = (512, 512)
         resolution = get_resolution_in_meters(bounds, shape)

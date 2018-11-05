@@ -219,7 +219,7 @@ if __name__ == "__main__":
         format = PNG_FORMAT
         transformation = COLORMAP_TRANSFORMATION
         formats = {
-            "tif": "image/tiff"
+            "tif": "image/png"
         }
 
     def render(tile_with_sources):

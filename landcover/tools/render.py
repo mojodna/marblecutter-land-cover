@@ -23,7 +23,9 @@ from marblecutter import get_resolution_in_meters, tiling
 from marblecutter.catalogs import WGS84_CRS
 from marblecutter.catalogs.postgis import PostGISCatalog
 from marblecutter.formats.geotiff import GeoTIFF
+from marblecutter.formats.png import PNG
 from marblecutter.stats import Timer
+from marblecutter.transformations import Colormap
 from marblecutter.utils import Bounds
 from mercantile import Tile
 
@@ -37,7 +39,9 @@ logging.getLogger("marblecutter.mosaic").setLevel(logging.WARNING)
 logging.getLogger("rasterio._base").setLevel(logging.WARNING)
 
 CATALOG = PostGISCatalog(table="land_cover")
+COLORMAP_TRANSFORMATION = Colormap(COLORMAP)
 GEOTIFF_FORMAT = GeoTIFF(colormap=COLORMAP)
+PNG_FORMAT = PNG()
 S3 = boto3.client("s3")
 
 
@@ -170,6 +174,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--concurrency", "-c", type=int, default=multiprocessing.cpu_count() * 2
     )
+    parser.add_argument("--format", "-f", choices=["png", "tif"])
     parser.add_argument("--hash", "-H", action="store_true")
     parser.add_argument("--cache-sources", "-l", action="store_true")
     parser.add_argument("target", default="file://./", nargs="?")
@@ -196,12 +201,25 @@ if __name__ == "__main__":
     else:
         catalog = CATALOG
 
+    transformation = None
+    format = GEOTIFF_FORMAT
+    formats = {
+        "tif": "image/tiff"
+    }
+
+    if args.format == "png":
+        format = PNG_FORMAT
+        transformation = COLORMAP_TRANSFORMATION
+        formats = {
+            "tif": "image/tiff"
+        }
+
     def render(tile_with_sources):
         tile, sources = tile_with_sources
 
         with Timer() as t:
             headers, data = tiling.render_tile_from_sources(
-                tile, sources, format=GEOTIFF_FORMAT, scale=2
+                tile, sources, format=format, transformation=transformation, scale=2
             )
 
         logger.debug(
@@ -232,7 +250,7 @@ if __name__ == "__main__":
         "minzoom": min_zoom,
         "maxzoom": max_zoom,
         "bounds": mercantile.bounds(root),
-        "formats": {"tif": "image/tiff"},
+        "formats": formats,
         "minscale": 2,
         "maxscale": 2,
     }

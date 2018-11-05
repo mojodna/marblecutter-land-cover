@@ -94,7 +94,7 @@ def subpyramids(tile, max_zoom, metatile=1, materialize_zooms=None):
     return filter(lambda t: t.x % metatile == 0 and t.y % metatile == 0, generate_tiles(tile, max_zoom, metatile, materialize_zooms))
 
 
-def create_archive(tiles, root, max_zoom, meta):
+def create_archive(tiles, root, max_zoom, meta, ext):
     # expand bounds
     roots = generate_tiles(root, root.z, meta["metatile"])
 
@@ -121,7 +121,7 @@ def create_archive(tiles, root, max_zoom, meta):
         for tile, (_, data) in tiles:
             logger.info("%d/%d/%d", tile.z, tile.x, tile.y)
 
-            info = ZipInfo("{}/{}/{}@2x.tif".format(tile.z, tile.x, tile.y), date_time)
+            info = ZipInfo("{}/{}/{}@2x.{}".format(tile.z, tile.x, tile.y, ext), date_time)
             info.external_attr = 0o755 << 16
             archive.writestr(info, data, ZIP_DEFLATED)
 
@@ -153,7 +153,7 @@ def write(body, target):
                 Body=body,
                 Bucket=bucket,
                 Key=key,
-                ContentType="image/tiff",
+                ContentType="application/zip",
             )
         except botocore.exceptions.ClientError as e:
             logger.exception(e)
@@ -209,18 +209,20 @@ if __name__ == "__main__":
     else:
         catalog = CATALOG
 
-    transformation = None
+    ext = "tif"
     format = GEOTIFF_FORMAT
     formats = {
         "tif": "image/tiff"
     }
+    transformation = None
 
     if args.format == "png":
+        ext = "png"
         format = PNG_FORMAT
-        transformation = COLORMAP_TRANSFORMATION
         formats = {
-            "tif": "image/png"
+            "png": "image/png"
         }
+        transformation = COLORMAP_TRANSFORMATION
 
     def render(tile_with_sources):
         tile, sources = tile_with_sources
@@ -293,7 +295,7 @@ if __name__ == "__main__":
                 render, map(sources_for_tile, generate_tiles(materialized_tile, max_zoom, metatile))
             )
 
-            archive = create_archive(tiles, materialized_tile, max_zoom, meta.copy())
+            archive = create_archive(tiles, materialized_tile, max_zoom, meta.copy(), ext)
 
             key = "{}/{}/{}".format(materialized_tile.z, materialized_tile.x, materialized_tile.y)
             if args.hash:

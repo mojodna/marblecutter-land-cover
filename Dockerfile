@@ -24,6 +24,8 @@ RUN apt update \
     ca-certificates \
     cython3 \
     git \
+    libagg-dev \
+    libpotrace-dev \
     python3.6-dev \
     python3-pip \
     python3-wheel \

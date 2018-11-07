@@ -4,3 +4,4 @@ https://github.com/mojodna/marblecutter/archive/3f10756.tar.gz#egg=marblecutter[
 rasterio[s3] >= 1.0 --no-binary rasterio
 
 psycopg2-binary
+git+https://github.com/salbito/pypotrace.git

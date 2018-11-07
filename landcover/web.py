@@ -16,6 +16,7 @@ from marblecutter.web import app, url_for
 from mercantile import Tile
 
 from .colormap import COLORMAP
+from .formats import GeoJSON
 
 LOG = logging.getLogger(__name__)
 CATALOG = PostGISCatalog(table="land_cover")
@@ -74,6 +75,24 @@ def render_png(z, x, y, scale=1):
         CATALOG,
         format=IMAGE_FORMAT,
         transformation=COLORMAP_TRANSFORMATION,
+        scale=scale,
+    )
+
+    headers.update(CATALOG.headers)
+
+    return data, 200, headers
+
+
+@app.route("/<int:z>/<int:x>/<int:y>.json")
+def render_json(z, x, y, scale=1):
+    tile = Tile(x, y, z)
+
+    sieve = int(request.args.get("sieve", 4))
+
+    headers, data = tiling.render_tile(
+        tile,
+        CATALOG,
+        format=GeoJSON(sieve_size=sieve),
         scale=scale,
     )
 

@@ -183,6 +183,7 @@ if __name__ == "__main__":
     parser.add_argument("--format", "-f", choices=["png", "tif"])
     parser.add_argument("--hash", "-H", action="store_true")
     parser.add_argument("--cache-sources", "-l", action="store_true")
+    parser.add_argument("--skip-meta", "-s", action="store_true")
     parser.add_argument("target", default="file://./", nargs="?")
 
     args = parser.parse_args()
@@ -268,15 +269,16 @@ if __name__ == "__main__":
     if metatile > 1:
         meta["metatile"] = metatile
 
-    source = path.join(args.target, "{z}", "{x}", "{y}.zip")
-    if args.hash:
-        source = path.join(args.target, "{h}", "{z}", "{x}", "{y}.zip")
+    if not args.skip_meta:
+        source = path.join(args.target, "{z}", "{x}", "{y}.zip")
+        if args.hash:
+            source = path.join(args.target, "{h}", "{z}", "{x}", "{y}.zip")
 
-    root_meta = meta.copy()
-    root_meta["materializedZooms"] = materialize_zooms
-    root_meta["source"] = source
+        root_meta = meta.copy()
+        root_meta["materializedZooms"] = materialize_zooms
+        root_meta["source"] = source
 
-    write(json.dumps(root_meta), path.join(args.target, "meta.json"))
+        write(json.dumps(root_meta), path.join(args.target, "meta.json"))
 
     with futures.ProcessPoolExecutor(max_workers=concurrency) as executor:
         for materialized_tile in subpyramids(root, args.max_zoom, metatile, materialize_zooms):

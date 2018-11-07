@@ -32,6 +32,42 @@ logging.getLogger("rasterio._base").setLevel(logging.WARNING)
 logging.getLogger("botocore.credentials").setLevel(logging.WARNING)
 
 
+import mercantile
+from marblecutter import get_resolution_in_meters
+from marblecutter.utils import Bounds
+from marblecutter.catalogs import WGS84_CRS
+from marblecutter.tiling import WEB_MERCATOR_CRS
+from .catalogs import SpatialiteCatalog
+
+def build_catalog(tile, min_zoom, max_zoom):
+    catalog = SpatialiteCatalog()
+
+    for source in upstream_sources_for_tile(
+        tile, CATALOG, min_zoom=min_zoom, max_zoom=max_zoom
+    ):
+        catalog.add_source(source)
+
+    return catalog
+
+
+# TODO fold this upstream, e.g. footprints.something
+def upstream_sources_for_tile(tile, catalog, min_zoom=None, max_zoom=None):
+    """Render a tile's source footprints."""
+    bounds = Bounds(mercantile.bounds(tile), WGS84_CRS)
+    shape = (512, 512)
+    resolution = get_resolution_in_meters(bounds, shape)
+
+    return catalog.get_sources(
+        bounds,
+        resolution,
+        min_zoom=min_zoom,
+        max_zoom=max_zoom,
+        include_geometries=True,
+    )
+
+LOCAL_CATALOG = build_catalog(Tile(0, 0, 0), 0, 7)
+
+
 @app.route("/")
 def meta():
     meta = {
@@ -58,6 +94,39 @@ def preview():
             "preview.html",
             tilejson_url=Markup(
                 url_for("meta", _external=True, _scheme="", **request.args)
+            ),
+        ),
+        200,
+        {"Content-Type": "text/html"},
+    )
+
+
+@app.route("/local/")
+def local_meta():
+    meta = {
+        "bounds": LOCAL_CATALOG.bounds,
+        "center": LOCAL_CATALOG.center,
+        "maxzoom": LOCAL_CATALOG.maxzoom,
+        "minzoom": LOCAL_CATALOG.minzoom,
+        "name": LOCAL_CATALOG.name,
+        "tilejson": "2.2.0",
+        "tiles": [
+            "{}{{z}}/{{x}}/{{y}}?{}".format(
+                url_for("local_meta", _external=True, _scheme=""), urlencode(request.args)
+            )
+        ],
+    }
+
+    return jsonify(meta)
+
+
+@app.route("/local/preview")
+def local_preview():
+    return (
+        render_template(
+            "preview.html",
+            tilejson_url=Markup(
+                url_for("local_meta", _external=True, _scheme="", **request.args)
             ),
         ),
         200,
@@ -97,6 +166,38 @@ def render_json(z, x, y, scale=1):
     )
 
     headers.update(CATALOG.headers)
+
+    return data, 200, headers
+
+
+@app.route("/local/<int:z>/<int:x>/<int:y>")
+@app.route("/local/<int:z>/<int:x>/<int:y>@<int:scale>x")
+def local_render_png(z, x, y, scale=1):
+    tile = Tile(x, y, z)
+
+    # bounds = Bounds(mercantile.bounds(tile), WGS84_CRS)
+    bounds = Bounds(mercantile.xy_bounds(tile), WEB_MERCATOR_CRS)
+    # TODO scale
+    if scale == 2:
+        shape = (512, 512)
+    else:
+        shape = (256, 256)
+
+    LOG.info("bounds: %s", bounds)
+    LOG.info("shape: %s", shape)
+    resolution = get_resolution_in_meters(bounds, shape)
+
+    sources = LOCAL_CATALOG.get_sources(bounds, resolution)
+
+    headers, data = tiling.render_tile_from_sources(
+        tile,
+        sources,
+        format=IMAGE_FORMAT,
+        transformation=COLORMAP_TRANSFORMATION,
+        scale=scale,
+    )
+
+    headers.update(LOCAL_CATALOG.headers)
 
     return data, 200, headers
 

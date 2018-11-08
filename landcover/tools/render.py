@@ -91,7 +91,10 @@ def generate_tiles(tile, max_zoom, metatile=1, materialize_zooms=None):
 
 
 def subpyramids(tile, max_zoom, metatile=1, materialize_zooms=None):
-    return filter(lambda t: t.x % metatile == 0 and t.y % metatile == 0, generate_tiles(tile, max_zoom, metatile, materialize_zooms))
+    return filter(
+        lambda t: t.x % metatile == 0 and t.y % metatile == 0,
+        generate_tiles(tile, max_zoom, metatile, materialize_zooms),
+    )
 
 
 def create_archive(tiles, root, max_zoom, meta, ext):
@@ -121,7 +124,9 @@ def create_archive(tiles, root, max_zoom, meta, ext):
         for tile, (_, data) in tiles:
             logger.info("%d/%d/%d", tile.z, tile.x, tile.y)
 
-            info = ZipInfo("{}/{}/{}@2x.{}".format(tile.z, tile.x, tile.y, ext), date_time)
+            info = ZipInfo(
+                "{}/{}/{}@2x.{}".format(tile.z, tile.x, tile.y, ext), date_time
+            )
             info.external_attr = 0o755 << 16
             archive.writestr(info, data, ZIP_DEFLATED)
 
@@ -150,10 +155,7 @@ def write(body, target):
 
         try:
             S3.put_object(
-                Body=body,
-                Bucket=bucket,
-                Key=key,
-                ContentType="application/zip",
+                Body=body, Bucket=bucket, Key=key, ContentType="application/zip"
             )
         except botocore.exceptions.ClientError as e:
             logger.exception(e)
@@ -168,23 +170,55 @@ def power_of_2(value):
     return value
 
 
+# E.g. python3 -m landcover.tools.render -x 0 -y 0 -z 0 -Z 7 -m 0 -m 4 -M 4 -l s3://mojodna-temp/lc/
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-x", type=int, required=True)
-    parser.add_argument("-y", type=int, required=True)
-    parser.add_argument("--zoom", "-z", type=int, required=True)
-    parser.add_argument("--max-zoom", "-Z", type=int, required=True)
-    parser.add_argument("--materialize", "-m", type=int, action="append")
-    parser.add_argument("--metatile", "-M", type=power_of_2, default=1)
+    parser.add_argument("-x", type=int, required=True, help="Root tile's X coordinate")
+    parser.add_argument("-y", type=int, required=True, help="Root tile's Y coordinate")
+    parser.add_argument("--zoom", "-z", type=int, required=True, help="Root zoom level")
+    parser.add_argument(
+        "--max-zoom", "-Z", type=int, required=True, help="Max zoom level to render"
+    )
+    parser.add_argument(
+        "--materialize",
+        "-m",
+        type=int,
+        action="append",
+        help="Materialize Tapalcatl 2 archives at specific zoom levels",
+    )
+    parser.add_argument(
+        "--metatile",
+        "-M",
+        type=power_of_2,
+        default=1,
+        help="Metatile size (sibling tiles included in the target archive)",
+    )
     parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument(
-        "--concurrency", "-c", type=int, default=multiprocessing.cpu_count() * 2
+        "--concurrency",
+        "-c",
+        type=int,
+        default=multiprocessing.cpu_count() * 2,
+        help="Number of sub-processes to use",
     )
-    parser.add_argument("--format", "-f", choices=["png", "tif"])
-    parser.add_argument("--hash", "-H", action="store_true")
-    parser.add_argument("--cache-sources", "-l", action="store_true")
-    parser.add_argument("--skip-meta", "-s", action="store_true")
-    parser.add_argument("target", default="file://./", nargs="?")
+    parser.add_argument(
+        "--format", "-f", choices=["png", "tif"], help="Generated tile format"
+    )
+    parser.add_argument(
+        "--hash", "-H", action="store_true", help="Include a hash as a path component"
+    )
+    parser.add_argument(
+        "--cache-sources",
+        "-l",
+        action="store_true",
+        help="Store a local cache of sources",
+    )
+    parser.add_argument(
+        "--skip-meta", "-s", action="store_true", help="Skip writing meta.json"
+    )
+    parser.add_argument(
+        "target", default="file://./", nargs="?", help="Target path/URI for archives"
+    )
 
     args = parser.parse_args()
 
@@ -204,7 +238,10 @@ if __name__ == "__main__":
 
     if args.cache_sources:
         logger.info(
-            "Caching sources for root tile %s from zoom %d to %d", root, min_zoom, max_zoom
+            "Caching sources for root tile %s from zoom %d to %d",
+            root,
+            min_zoom,
+            max_zoom,
         )
         catalog = build_catalog(root, min_zoom, max_zoom)
     else:
@@ -212,17 +249,13 @@ if __name__ == "__main__":
 
     ext = "tif"
     format = GEOTIFF_FORMAT
-    formats = {
-        "tif": "image/tiff"
-    }
+    formats = {"tif": "image/tiff"}
     transformation = None
 
     if args.format == "png":
         ext = "png"
         format = PNG_FORMAT
-        formats = {
-            "png": "image/png"
-        }
+        formats = {"png": "image/png"}
         transformation = COLORMAP_TRANSFORMATION
 
     def render(tile_with_sources):
@@ -281,7 +314,9 @@ if __name__ == "__main__":
         write(json.dumps(root_meta), path.join(args.target, "meta.json"))
 
     with futures.ProcessPoolExecutor(max_workers=concurrency) as executor:
-        for materialized_tile in subpyramids(root, args.max_zoom, metatile, materialize_zooms):
+        for materialized_tile in subpyramids(
+            root, args.max_zoom, metatile, materialize_zooms
+        ):
             # find the next materialized zoom
             idx = bisect_right(materialize_zooms, materialized_tile.z)
             if idx != len(materialize_zooms):
@@ -291,15 +326,29 @@ if __name__ == "__main__":
                 # out of materialized zooms
                 max_zoom = args.max_zoom
 
-            logger.info("Rendering %d/%d/%d to zoom %d", materialized_tile.z, materialized_tile.x, materialized_tile.y, max_zoom)
-
-            tiles = executor.map(
-                render, map(sources_for_tile, generate_tiles(materialized_tile, max_zoom, metatile))
+            logger.info(
+                "Rendering %d/%d/%d to zoom %d",
+                materialized_tile.z,
+                materialized_tile.x,
+                materialized_tile.y,
+                max_zoom,
             )
 
-            archive = create_archive(tiles, materialized_tile, max_zoom, meta.copy(), ext)
+            tiles = executor.map(
+                render,
+                map(
+                    sources_for_tile,
+                    generate_tiles(materialized_tile, max_zoom, metatile),
+                ),
+            )
 
-            key = "{}/{}/{}".format(materialized_tile.z, materialized_tile.x, materialized_tile.y)
+            archive = create_archive(
+                tiles, materialized_tile, max_zoom, meta.copy(), ext
+            )
+
+            key = "{}/{}/{}".format(
+                materialized_tile.z, materialized_tile.x, materialized_tile.y
+            )
             if args.hash:
                 h = hashlib.md5(key.encode("utf-8")).hexdigest()[:5]
                 key = "{}/{}".format(h, key)

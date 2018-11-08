@@ -27,10 +27,12 @@ build an image, run:
 make server
 ```
 
+(An auto-published version always exists at `quay.io/mojodna/marblecutter-land-cover`.)
+
 To start it, run:
 
 ```bash
-docker run --env-file .env -p 8000:8000 quay.io/mojodna/marblecutter-tilezen
+docker run --env-file .env -p 8000:8000 quay.io/mojodna/marblecutter-land-cover
 ```
 
 ## Lambda Deployment
@@ -63,6 +65,50 @@ The IAM role assumed by Lambda must have the
 [AmazonS3ReadOnlyAccess](https://console.aws.amazon.com/iam/home?region=us-east-1#policies/arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess)
 policy attached to it and access from target source buckets granted to the
 account being used in order for data to be read.
+
+## Bulk Rendering
+
+`landcover.tools.render` is a Python module that can be used to render tiles (as [Tapalcatl 2 archives](https://medium.com/@mojodna/tapalcatl-cloud-optimized-tile-archives-1db8d4577d92)) in bulk. It can be run like this:
+
+```bash
+python3 -m landcover.tools.render -x 0 -y 0 -z 0 -Z 7 -m 0 -m 4 -M 4 -l s3://<bucket>/<prefix>/
+```
+
+Options:
+
+```text
+$ python3 -m landcover.tools.render --help
+usage: render.py [-h] -x X -y Y --zoom ZOOM --max-zoom MAX_ZOOM
+                 [--materialize MATERIALIZE] [--metatile METATILE] [--verbose]
+                 [--concurrency CONCURRENCY] [--format {png,tif}] [--hash]
+                 [--cache-sources] [--skip-meta]
+                 [target]
+
+positional arguments:
+  target
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -x X                  Root tile's X coordinate
+  -y Y                  Root tile's Y coordinate
+  --zoom ZOOM, -z ZOOM  Root zoom level
+  --max-zoom MAX_ZOOM, -Z MAX_ZOOM
+                        Max zoom level to render
+  --materialize MATERIALIZE, -m MATERIALIZE
+                        Materialize Tapalcatl 2 archives at specific zoom
+                        levels
+  --metatile METATILE, -M METATILE
+                        Metatile size (sibling tiles included in the target
+                        archive)
+  --verbose, -v
+  --concurrency CONCURRENCY, -c CONCURRENCY
+                        Number of sub-processes to use
+  --format {png,tif}, -f {png,tif}
+                        Generated tile format
+  --hash, -H            Include a hash as a path component
+  --cache-sources, -l   Store a local cache of sources
+  --skip-meta, -s       Skip writing meta.json
+```
 
 ## Colormaps
 

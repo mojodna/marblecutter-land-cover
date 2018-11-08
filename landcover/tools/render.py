@@ -26,12 +26,13 @@ from marblecutter.formats.geotiff import GeoTIFF
 from marblecutter.formats.png import PNG
 from marblecutter.stats import Timer
 from marblecutter.tiling import WEB_MERCATOR_CRS
-from marblecutter.transformations import Colormap
+from marblecutter.transformations import Colormap, Transformation
 from marblecutter.utils import Bounds
 from mercantile import Tile
 
 from ..catalogs import SpatialiteCatalog
 from ..colormap import COLORMAP
+from ..formats import GeoJSON
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -202,7 +203,7 @@ if __name__ == "__main__":
         help="Number of sub-processes to use",
     )
     parser.add_argument(
-        "--format", "-f", choices=["png", "tif"], help="Generated tile format"
+        "--format", "-f", choices=["json", "png", "tif"], help="Generated tile format"
     )
     parser.add_argument(
         "--hash", "-H", action="store_true", help="Include a hash as a path component"
@@ -215,6 +216,15 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--skip-meta", "-s", action="store_true", help="Skip writing meta.json"
+    )
+    parser.add_argument(
+        "--sieve", type=int, default=4, help="Sieve size (for GeoJSON output)"
+    )
+    parser.add_argument(
+        "--buffer",
+        type=int,
+        default=0,
+        help='Buffer size in "pixels" (for GeoJSON output)',
     )
     parser.add_argument(
         "target", default="file://./", nargs="?", help="Target path/URI for archives"
@@ -257,6 +267,11 @@ if __name__ == "__main__":
         format = PNG_FORMAT
         formats = {"png": "image/png"}
         transformation = COLORMAP_TRANSFORMATION
+    elif args.format == "json":
+        ext = "json"
+        format = GeoJSON(args.sieve)
+        formats = {"json": "application/json"}
+        transformation = Transformation(collar=args.buffer)
 
     def render(tile_with_sources):
         tile, sources = tile_with_sources

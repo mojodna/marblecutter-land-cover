@@ -77,15 +77,15 @@ python3 -m landcover.tools.render -x 0 -y 0 -z 0 -Z 7 -m 0 -m 4 -M 4 -l s3://<bu
 Options:
 
 ```text
-$ python3 -m landcover.tools.render --help
 usage: render.py [-h] -x X -y Y --zoom ZOOM --max-zoom MAX_ZOOM
                  [--materialize MATERIALIZE] [--metatile METATILE] [--verbose]
-                 [--concurrency CONCURRENCY] [--format {png,tif}] [--hash]
-                 [--cache-sources] [--skip-meta]
+                 [--concurrency CONCURRENCY] [--format {json,png,tif}]
+                 [--hash] [--cache-sources] [--skip-meta] [--sieve SIEVE]
+                 [--buffer BUFFER]
                  [target]
 
 positional arguments:
-  target
+  target                Target path/URI for archives
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -103,11 +103,13 @@ optional arguments:
   --verbose, -v
   --concurrency CONCURRENCY, -c CONCURRENCY
                         Number of sub-processes to use
-  --format {png,tif}, -f {png,tif}
+  --format {json,png,tif}, -f {json,png,tif}
                         Generated tile format
   --hash, -H            Include a hash as a path component
   --cache-sources, -l   Store a local cache of sources
   --skip-meta, -s       Skip writing meta.json
+  --sieve SIEVE         Sieve size (for GeoJSON output)
+  --buffer BUFFER       Buffer size in "pixels" (for GeoJSON output)
 ```
 
 ## Colormaps

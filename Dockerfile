@@ -33,6 +33,9 @@ RUN apt update \
   && rm -rf /var/lib/apt/lists/* \
   && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
 
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
+  && apt install -y nodejs
+
 WORKDIR /opt/marblecutter
 
 COPY requirements-server.txt /opt/marblecutter/
@@ -43,6 +46,8 @@ RUN pip3 install -U numpy && \
   pip3 install -r requirements-server.txt && \
   pip3 install -r requirements-tools.txt && \
   rm -rf /root/.cache
+
+RUN npm install -g mapshaper
 
 COPY landcover /opt/marblecutter/landcover
 

@@ -18,6 +18,22 @@ To start it in standalone mode, run:
 docker-compose run --entrypoint bash marblecutter
 ```
 
+## Output Formats
+
+3 output formats are available:
+
+* GeoTIFF - `/{z}/{x}/{y}.tif` produces 256𝗑256 single-band, paletted GeoTIFFs
+  (colormaps are included)
+* PNG - `/{z}/{x}/{y}[@2x]` produces 256𝗑256 or 512𝗑512 paletted PNGs
+* GeoJSON - `/{z}/{x}/{y}.json` produces vectorized versions of 256𝗑256
+  images. An optional `?sieve` parameter controls the sieve size (which
+  defaults to `4`).
+
+GeoJSON output is very jagged, as pixel edges are vectorized.
+[MapShaper](https://mapshaper.org/) is a useful tool to make them less
+jagged; [mapshaper-proxy](https://github.com/mojodna/mapshaper-proxy) can be
+used to apply MapShaper commands on the fly.
+
 ## Deployment
 
 When not using Lambda, `marblecutter-land-cover` is best managed using Docker. To

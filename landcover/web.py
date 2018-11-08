@@ -23,7 +23,7 @@ CATALOG = PostGISCatalog(table="land_cover")
 COLLAR_TRANSFORMATION = Transformation(collar=16)
 COLORMAP_TRANSFORMATION = Colormap(COLORMAP)
 IMAGE_TRANSFORMATION = Image()
-IMAGE_FORMAT = PNG()
+IMAGE_FORMAT = PNG(paletted=True)
 GEOTIFF_FORMAT = GeoTIFF(colormap=COLORMAP)
 
 # configure logging

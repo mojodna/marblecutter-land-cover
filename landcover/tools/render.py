@@ -43,7 +43,7 @@ logging.getLogger("rasterio._base").setLevel(logging.WARNING)
 CATALOG = PostGISCatalog(table="land_cover")
 COLORMAP_TRANSFORMATION = Colormap(COLORMAP)
 GEOTIFF_FORMAT = GeoTIFF(colormap=COLORMAP)
-PNG_FORMAT = PNG()
+PNG_FORMAT = PNG(paletted=True)
 S3 = boto3.client("s3")
 
 

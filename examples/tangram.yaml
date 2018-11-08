@@ -1,0 +1,131 @@
+sources:
+    landcover:
+        min_zoom: 2
+        max_zoom: 12
+        max_display_zoom: 22
+        min_display_zoom: 0
+        type: GeoJSON
+        # marblecutter-land-cover
+        # url: http://localhost:8000/{z}/{x}/{y}.json?sieve=8
+        # mapshaper-proxy
+        url: http://localhost:8080/{z}/{x}/{y}.json?sieve=20
+scene:
+    background:
+        color: white
+styles:
+    water:
+        base: polygons
+        draw:
+            order: 1
+            color: rgb(49, 128, 162)
+    developed:
+        base: polygons
+        draw:
+            order: 1
+            color: rgb(203, 8, 20)
+    barren:
+        base: polygons
+        draw:
+            order: 1
+            color: rgb(198, 180, 134)
+    forest:
+        base: polygons
+        draw:
+            order: 1
+            color: rgb(27, 119, 28)
+    shrubland:
+        base: polygons
+        draw:
+            order: 1
+            color: rgb(184, 193, 112)
+    herbaceous:
+        base: polygons
+        draw:
+            order: 1
+            color: rgb(188, 212, 149)
+    cultivated:
+        base: polygons
+        draw:
+            order: 1
+            color: rgb(215, 214, 114)
+    wetlands:
+        base: polygons
+        draw:
+            order: 1
+            color: rgb(146, 184, 186)
+    glacier:
+        base: polygons
+        draw:
+            order: 1
+            color: rgb(230, 239, 253)
+    desert:
+        base: polygons
+        draw:
+            order: 1
+            color: rgb(232, 211, 157)
+layers:
+    classifications:
+        enabled: true
+        data:
+            source: landcover
+        water:
+            filter:
+                value: 10
+            draw:
+                polygons:
+                    style: water
+        developed:
+            filter:
+                value: 20
+            draw:
+                polygons:
+                    style: developed
+        barren:
+            filter:
+                value: 30
+            draw:
+                polygons:
+                    style: barren
+        forest:
+            filter:
+                value: 40
+            draw:
+                polygons:
+                    style: forest
+        shrubland:
+            filter:
+                value: 50
+            draw:
+                polygons:
+                    style: shrubland
+        herbaceous:
+            filter:
+                value: 70
+            draw:
+                polygons:
+                    style: herbaceous
+        cultivated:
+            filter:
+                value: 80
+            draw:
+                polygons:
+                    style: cultivated
+        wetlands:
+            filter:
+                value: 90
+            draw:
+                polygons:
+                    style: wetlands
+        glacier:
+            filter:
+                value: 100
+            draw:
+                polygons:
+                    style: glacier
+        desert:
+            filter:
+                value: 110
+            draw:
+                polygons:
+                    style: desert
+

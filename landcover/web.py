@@ -11,7 +11,7 @@ from marblecutter import NoCatalogAvailable, tiling
 from marblecutter.catalogs.postgis import PostGISCatalog
 from marblecutter.formats.geotiff import GeoTIFF
 from marblecutter.formats.png import PNG
-from marblecutter.transformations import Colormap, Image
+from marblecutter.transformations import Colormap, Image, Transformation
 from marblecutter.web import app, url_for
 from mercantile import Tile
 
@@ -20,6 +20,7 @@ from .formats import GeoJSON
 
 LOG = logging.getLogger(__name__)
 CATALOG = PostGISCatalog(table="land_cover")
+COLLAR_TRANSFORMATION = Transformation(collar=16)
 COLORMAP_TRANSFORMATION = Colormap(COLORMAP)
 IMAGE_TRANSFORMATION = Image()
 IMAGE_FORMAT = PNG()
@@ -93,6 +94,7 @@ def render_json(z, x, y, scale=1):
         tile,
         CATALOG,
         format=GeoJSON(sieve_size=sieve),
+        transformation=COLLAR_TRANSFORMATION,
         scale=scale,
     )
 

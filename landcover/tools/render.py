@@ -304,6 +304,7 @@ if __name__ == "__main__":
         return (tile, list(catalog.get_sources(bounds, resolution)))
 
     meta = {
+        "tapalcatl": "2.0.0",
         "name": "Land Cover",
         "description": "Unified land cover, derived from MODIS-LC, ESACCI-LC, NLCD, and C-CAP.",
         "minzoom": min_zoom,

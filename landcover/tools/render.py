@@ -29,6 +29,7 @@ from marblecutter.tiling import WEB_MERCATOR_CRS
 from marblecutter.transformations import Colormap, Transformation
 from marblecutter.utils import Bounds
 from mercantile import Tile
+from rasterio import Affine
 
 from ..catalogs import SpatialiteCatalog
 from ..colormap import COLORMAP
@@ -261,6 +262,7 @@ if __name__ == "__main__":
     format = GEOTIFF_FORMAT
     formats = {"tif": "image/tiff"}
     transformation = None
+    scale = 2
 
     if args.format == "png":
         ext = "png"
@@ -271,14 +273,15 @@ if __name__ == "__main__":
         ext = "json"
         format = GeoJSON(args.sieve)
         formats = {"json": "application/json"}
-        transformation = Transformation(collar=args.buffer)
+        scale = 0.5
+        transformation = Transformation(collar=args.buffer * scale)
 
     def render(tile_with_sources):
         tile, sources = tile_with_sources
 
         with Timer() as t:
             headers, data = tiling.render_tile_from_sources(
-                tile, sources, format=format, transformation=transformation, scale=2
+                tile, sources, format=format, transformation=transformation, scale=scale
             )
 
         logger.debug(
@@ -296,8 +299,7 @@ if __name__ == "__main__":
     def sources_for_tile(tile):
         """Render a tile's source footprints."""
         bounds = Bounds(mercantile.xy_bounds(tile), WEB_MERCATOR_CRS)
-        # TODO scale
-        shape = (512, 512)
+        shape = Affine.scale(scale) * (256, 256)
         resolution = get_resolution_in_meters(bounds, shape)
 
         # convert sources to a list to avoid passing the generator across thread boundaries

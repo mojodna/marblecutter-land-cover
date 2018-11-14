@@ -20,7 +20,6 @@ from .formats import GeoJSON
 
 LOG = logging.getLogger(__name__)
 CATALOG = PostGISCatalog(table="land_cover")
-COLLAR_TRANSFORMATION = Transformation(collar=16)
 COLORMAP_TRANSFORMATION = Colormap(COLORMAP)
 IMAGE_TRANSFORMATION = Image()
 IMAGE_FORMAT = PNG(paletted=True)
@@ -85,7 +84,7 @@ def render_png(z, x, y, scale=1):
 
 
 @app.route("/<int:z>/<int:x>/<int:y>.json")
-def render_json(z, x, y, scale=1):
+def render_json(z, x, y):
     tile = Tile(x, y, z)
 
     sieve = int(request.args.get("sieve", 4))
@@ -94,8 +93,8 @@ def render_json(z, x, y, scale=1):
         tile,
         CATALOG,
         format=GeoJSON(sieve_size=sieve),
-        transformation=COLLAR_TRANSFORMATION,
-        scale=scale,
+        transformation=Transformation(collar=8),
+        scale=0.5,
     )
 
     headers.update(CATALOG.headers)

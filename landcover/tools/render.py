@@ -100,7 +100,7 @@ def subpyramids(tile, max_zoom, metatile=1, materialize_zooms=None):
 
 def create_archive(tiles, root, max_zoom, meta, ext):
     # expand bounds
-    roots = generate_tiles(root, root.z, meta["metatile"])
+    roots = generate_tiles(root, root.z, meta.get("metatile", 1))
 
     min_x, min_y, max_x, max_y = mercantile.bounds(root)
 

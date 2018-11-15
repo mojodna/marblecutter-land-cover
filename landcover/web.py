@@ -84,6 +84,7 @@ def render_png(z, x, y, scale=1):
 
 
 @app.route("/<int:z>/<int:x>/<int:y>.json")
+@app.route("/<int:z>/<int:x>/<int:y>@<int:scale>x.json")
 @app.route("/<int:z>/<int:x>/<int:y>@<float:scale>x.json")
 def render_json(z, x, y, scale=1):
     tile = Tile(x, y, z)

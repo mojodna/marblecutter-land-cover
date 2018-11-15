@@ -94,10 +94,10 @@ Options:
 
 ```text
 usage: render.py [-h] -x X -y Y --zoom ZOOM --max-zoom MAX_ZOOM
-                 [--materialize MATERIALIZE] [--metatile METATILE] [--verbose]
-                 [--concurrency CONCURRENCY] [--format {json,png,tif}]
-                 [--hash] [--cache-sources] [--skip-meta] [--sieve SIEVE]
-                 [--buffer BUFFER]
+                 [--scale SCALE] [--materialize MATERIALIZE]
+                 [--metatile METATILE] [--verbose] [--concurrency CONCURRENCY]
+                 [--format {json,png,tif}] [--hash] [--cache-sources]
+                 [--skip-meta] [--sieve SIEVE] [--buffer BUFFER]
                  [target]
 
 positional arguments:
@@ -110,6 +110,8 @@ optional arguments:
   --zoom ZOOM, -z ZOOM  Root zoom level
   --max-zoom MAX_ZOOM, -Z MAX_ZOOM
                         Max zoom level to render
+  --scale SCALE, -S SCALE
+                        Scale
   --materialize MATERIALIZE, -m MATERIALIZE
                         Materialize Tapalcatl 2 archives at specific zoom
                         levels

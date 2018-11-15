@@ -181,6 +181,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max-zoom", "-Z", type=int, required=True, help="Max zoom level to render"
     )
+    parser.add_argument("--scale", "-S", type=float, default=1, help="Scale")
     parser.add_argument(
         "--materialize",
         "-m",
@@ -242,6 +243,7 @@ if __name__ == "__main__":
     max_zoom = args.max_zoom
     metatile = args.metatile
     materialize_zooms = args.materialize or []
+    scale = args.scale
     if args.zoom not in materialize_zooms:
         materialize_zooms = [args.zoom] + materialize_zooms
 
@@ -262,7 +264,6 @@ if __name__ == "__main__":
     format = GEOTIFF_FORMAT
     formats = {"tif": "image/tiff"}
     transformation = None
-    scale = 2
 
     if args.format == "png":
         ext = "png"
@@ -273,7 +274,6 @@ if __name__ == "__main__":
         ext = "json"
         format = GeoJSON(args.sieve)
         formats = {"json": "application/json"}
-        scale = 0.5
         transformation = Transformation(collar=args.buffer * scale)
 
     def render(tile_with_sources):
@@ -313,9 +313,11 @@ if __name__ == "__main__":
         "maxzoom": max_zoom,
         "bounds": mercantile.bounds(root),
         "formats": formats,
-        "minscale": 2,
-        "maxscale": 2,
     }
+
+    if scale > 0:
+        meta["minscale"] = int(scale)
+        meta["maxscale"] = int(scale)
 
     if metatile > 1:
         meta["metatile"] = metatile

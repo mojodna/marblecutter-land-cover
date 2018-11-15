@@ -84,7 +84,8 @@ def render_png(z, x, y, scale=1):
 
 
 @app.route("/<int:z>/<int:x>/<int:y>.json")
-def render_json(z, x, y):
+@app.route("/<int:z>/<int:x>/<int:y>@<float:scale>x.json")
+def render_json(z, x, y, scale=1):
     tile = Tile(x, y, z)
 
     sieve = int(request.args.get("sieve", 4))
@@ -93,8 +94,8 @@ def render_json(z, x, y):
         tile,
         CATALOG,
         format=GeoJSON(sieve_size=sieve),
-        transformation=Transformation(collar=8),
-        scale=0.5,
+        transformation=Transformation(collar=8 * scale),
+        scale=scale,
     )
 
     headers.update(CATALOG.headers)

@@ -6,13 +6,13 @@ from urllib.parse import urlencode
 from logging import StreamHandler
 
 from cachetools.func import lru_cache
-from flask import Markup, jsonify, render_template, request
+from flask import Flask, Markup, jsonify, render_template, request
 from marblecutter import NoCatalogAvailable, tiling
 from marblecutter.catalogs.postgis import PostGISCatalog
 from marblecutter.formats.geotiff import GeoTIFF
 from marblecutter.formats.png import PNG
 from marblecutter.transformations import Colormap, Image, Transformation
-from marblecutter.web import app, url_for
+from marblecutter.web import bp, url_for
 from mercantile import Tile
 
 from .colormap import COLORMAP
@@ -30,6 +30,10 @@ GEOTIFF_FORMAT = GeoTIFF(colormap=COLORMAP)
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("rasterio._base").setLevel(logging.WARNING)
 logging.getLogger("botocore.credentials").setLevel(logging.WARNING)
+
+app = Flask("marblecutter-land-cover")
+app.register_blueprint(bp)
+app.url_map.strict_slashes = False
 
 
 @app.route("/")
